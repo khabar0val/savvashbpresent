@@ -24,7 +24,7 @@ class MyClient(discord.Client):
 				print('[SUCCESS] User {0.display_name} has been granted with role {1.name}'.format(member, role))
 
 			else:
-				await message.remove_reaction(payload.emoji, memeber)
+				await message.remove_reaction(payload.emoji, member)
 				print('[ERROR] Too many roles for user {0.display_name}' + emoji.format(member, role))
 
 		except KeyError as e:
@@ -42,7 +42,7 @@ class MyClient(discord.Client):
 			emoji = str(payload.emoji)
 			role = utils.get(message.guild.roles, id=config.ROLES[emoji])
 
-			await member.remove_role(role)
+			await member.remove_roles(role)
 			print('[SUCCESS] Role {1.name} has been remove for user {0.display_name}'.format(member, role))
 
 		except KeyError as e:
