@@ -2,13 +2,22 @@ import discord
 import config
 
 from discord import utils
+from loguru import logger
 
 intents = discord.Intents.all()
 intents.members = True
 
+logger.add('bot_logs.log', format = "{time} {level} {message}", level = "WARNING", rotation = "1 week", compression = "zip")
+
 class MyClient(discord.Client):
 	async def on_ready(self):
-		print("Logged on as {0}!".format(self.user))
+		try:
+			print("Logged on as {0}!".format(self.user))
+
+		except:
+			logger.warning("WARNING with on_ready")
+			logger.error("ERROR with on_ready")
+			logger.critical("CRITICAL with on_ready")
 
 	async def on_raw_reaction_add(self, payload):
 		channel = self.get_channel(payload.channel_id)
@@ -24,7 +33,7 @@ class MyClient(discord.Client):
 				print('[SUCCESS] User {0.display_name} has been granted with role {1.name}'.format(member, role))
 
 			else:
-				await message.remove_reaction(payload.emoji, memeber)
+				await message.remove_reaction(payload.emoji, member)
 				print('[ERROR] Too many roles for user {0.display_name}' + emoji.format(member, role))
 
 		except KeyError as e:
@@ -32,6 +41,10 @@ class MyClient(discord.Client):
 
 		except Exception as e:
 			print(repr(e))
+
+			logger.warning("WARNING with on on_raw_reaction_add")
+			logger.error("ERROR with on on_raw_reaction_add")
+			logger.critical("CRITICAL with on on_raw_reaction_add")
 
 	async def on_raw_reaction_remove(self, payload):
 		channel = self.get_channel(payload.channel_id)
@@ -42,7 +55,7 @@ class MyClient(discord.Client):
 			emoji = str(payload.emoji)
 			role = utils.get(message.guild.roles, id=config.ROLES[emoji])
 
-			await member.remove_role(role)
+			await member.remove_roles(role)
 			print('[SUCCESS] Role {1.name} has been remove for user {0.display_name}'.format(member, role))
 
 		except KeyError as e:
@@ -50,6 +63,10 @@ class MyClient(discord.Client):
 
 		except Exception as e:
 			print(repr(e))
+
+			logger.warning("WARNING with on on_raw_reaction_remove")
+			logger.error("ERROR with on on_raw_reaction_remove")
+			logger.critical("CRITICAL with on on_raw_reaction_remove")
 
 	client = discord.Client(intents=intents)
 
