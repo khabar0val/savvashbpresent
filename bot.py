@@ -1,76 +1,82 @@
 import discord
 import config
+import os
+import sqlite3
 
 from discord import utils
 from loguru import logger
 
-intents = discord.Intents.all()
-intents.members = True
+bot = discord.Client(intents=discord.Intents.all())
 
 logger.add('bot_logs.log', format = "{time} {level} {message}", level = "WARNING", rotation = "1 week", compression = "zip")
 
-class MyClient(discord.Client):
-	async def on_ready(self):
-		try:
-			print("Logged on as {0}!".format(self.user))
+@bot.event
+async def on_ready():
+	global base, cursor
+	base = sqlite3.connect('bot.db')
+	cursor = base.cursor()
 
-		except:
-			logger.warning("WARNING with on_ready")
-			logger.error("ERROR with on_ready")
-			logger.critical("CRITICAL with on_ready")
+	if base:
+		print("Database has already connected...OK")
 
-	async def on_raw_reaction_add(self, payload):
-		channel = self.get_channel(payload.channel_id)
-		message = await channel.fetch_message(payload.message_id)
-		member = utils.get(message.guild.members, id=payload.user_id)
+	try:
+		print("Logged on!")
 
-		try:
-			emoji = str(payload.emoji)
-			role = utils.get(message.guild.roles, id=config.ROLES[emoji])
+	except:
+		logger.warning("WARNING with on_ready")
+		logger.error("ERROR with on_ready")
+		logger.critical("CRITICAL with on_ready")
 
-			if len([i for i in member.roles if i.id not in config.EXCROLES]) <= config.MAX_ROLES_PER_USER:
-				await member.add_roles(role)
-				print('[SUCCESS] User {0.display_name} has been granted with role {1.name}'.format(member, role))
+@bot.event
+async def on_raw_reaction_add(payload):
+	channel = bot.get_channel(payload.channel_id)
+	message = await channel.fetch_message(payload.message_id)
+	member = utils.get(message.guild.members, id=payload.user_id)
 
-			else:
-				await message.remove_reaction(payload.emoji, member)
-				print('[ERROR] Too many roles for user {0.display_name}' + emoji.format(member, role))
+	try:
+		emoji = str(payload.emoji)
+		role = utils.get(message.guild.roles, id=config.ROLES[emoji])
 
-		except KeyError as e:
-			print('[ERROR] KeyError, no role found for' + emoji)
+		if len([i for i in member.roles if i.id not in config.EXCROLES]) <= config.MAX_ROLES_PER_USER:
+			await member.add_roles(role)
+			print('[SUCCESS] User {0.display_name} has been granted with role {1.name}'.format(member, role))
 
-		except Exception as e:
-			print(repr(e))
+		else:
+			await message.remove_reaction(payload.emoji, member)
+			print('[ERROR] Too many roles for user {0.display_name}' + emoji.format(member, role))
 
-			logger.warning("WARNING with on on_raw_reaction_add")
-			logger.error("ERROR with on on_raw_reaction_add")
-			logger.critical("CRITICAL with on on_raw_reaction_add")
+	except KeyError as e:
+		print('[ERROR] KeyError, no role found for' + emoji)
 
-	async def on_raw_reaction_remove(self, payload):
-		channel = self.get_channel(payload.channel_id)
-		message = await channel.fetch_message(payload.message_id)
-		member = utils.get(message.guild.members, id=payload.user_id)
+	except Exception as e:
+		print(repr(e))
 
-		try:
-			emoji = str(payload.emoji)
-			role = utils.get(message.guild.roles, id=config.ROLES[emoji])
+		logger.warning("WARNING with on on_raw_reaction_add")
+		logger.error("ERROR with on on_raw_reaction_add")
+		logger.critical("CRITICAL with on on_raw_reaction_add")
 
-			await member.remove_roles(role)
-			print('[SUCCESS] Role {1.name} has been remove for user {0.display_name}'.format(member, role))
+@bot.event
+async def on_raw_reaction_remove(payload):
+	channel = bot.get_channel(payload.channel_id)
+	message = await channel.fetch_message(payload.message_id)
+	member = utils.get(message.guild.members, id=payload.user_id)
 
-		except KeyError as e:
-			print('[ERROR] KeyError, no role found for' + emoji)
+	try:
+		emoji = str(payload.emoji)
+		role = utils.get(message.guild.roles, id=config.ROLES[emoji])
 
-		except Exception as e:
-			print(repr(e))
+		await member.remove_roles(role)
+		print('[SUCCESS] Role {1.name} has been remove for user {0.display_name}'.format(member, role))
 
-			logger.warning("WARNING with on on_raw_reaction_remove")
-			logger.error("ERROR with on on_raw_reaction_remove")
-			logger.critical("CRITICAL with on on_raw_reaction_remove")
+	except KeyError as e:
+		print('[ERROR] KeyError, no role found for' + emoji)
 
-	client = discord.Client(intents=intents)
+	except Exception as e:
+		print(repr(e))
+
+		logger.warning("WARNING with on on_raw_reaction_remove")
+		logger.error("ERROR with on on_raw_reaction_remove")
+		logger.critical("CRITICAL with on on_raw_reaction_remove")
 
 # RUN
-
-client = MyClient(intents=discord.Intents.all())
-client.run(config.TOKEN)
+bot.run(config.TOKEN)
