@@ -30,6 +30,20 @@ async def on_ready():
 		logger.critical("CRITICAL with on_ready")
 
 @bot.event
+async def on_member_join(member):
+	await member.send('Привет! Я бот этого сервера!')
+
+	for channel in bot.get_guild(member.guild.id).channels:
+		if channel.name == 'основной' or 'general':
+			await bot.get_channel(channel.id).send(f'{member}, добро пожаловать!')
+
+@bot.event
+async def on_member_remove(member):
+	for channel in bot.get_guild(member.guild.id).channels:
+		if channel.name == 'основной' or 'general':
+			await bot.get_channel(channel.id).send(f'{member}, нам будет тебя не хватать!')
+
+@bot.event
 async def on_raw_reaction_add(payload):
 	channel = bot.get_channel(payload.channel_id)
 	message = await channel.fetch_message(payload.message_id)
