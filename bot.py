@@ -103,5 +103,31 @@ async def on_message(message):
 		await message.channel.send(f'{message.author.mention}, да я смотрю тебе давно рот мылом не мыли... Это было первое предупреждение, после трех предупреждений тебя забанят!')
 		await message.delete()
 
+		name = message.guild.name
+
+		base.execute('CREATE TABLE IF NOT EXISTS ban(user_id INT, count INT)'.format(name))
+		base.commit()
+
+		warning = cursor.execute('SELECT * FROM ban WHERE user_id = ?'.format(name), (message.author.id,)).fetchone()
+
+		if warning == None:
+			cursor.execute('INSERT INTO ban VALUES(?, ?)'.format(name), (message.author.id, 1))
+			base.commit()
+
+			await message.channel.send(f'{message.author.mention}, !!!')
+
+		elif warning[1] == 1:
+			cursor.execute('UPDATE ban SET count = ? WHERE user_id = ?'.format(name), (2, message.author.id))
+			base.commit()
+
+			await message.channel.send(f'{message.author.mention}, 2-ое предупреждение, на 3-ее вас забанят!')
+
+		elif warning[1] == 2:
+			cursor.execute('UPDATE ban SET count = ? WHERE user_id = ?'.format(name), (3, message.author.id))
+			base.commit()
+
+			await message.channel.send(f'{message.author.mention}, забанили за мат в группе!')
+			await message.author.ban(reason='Нецензурные выражения')
+
 # RUN
 bot.run(config.TOKEN)
