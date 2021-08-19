@@ -1,6 +1,8 @@
+import os
+import json
 import discord
 import config
-import os
+import string
 import sqlite3
 
 from discord import utils
@@ -77,6 +79,15 @@ async def on_raw_reaction_remove(payload):
 		logger.warning("WARNING with on on_raw_reaction_remove")
 		logger.error("ERROR with on on_raw_reaction_remove")
 		logger.critical("CRITICAL with on on_raw_reaction_remove")
+
+@bot.event
+async def on_message(message):
+	if 'как' and 'дела' in message.content.lower():
+		await message.channel.send('Спасибо, всё отлично!')
+
+	elif {i.lower().translate(str.maketrans('', '', string.punctuation)) for i in message.content.split(' ')}.intersection(set(json.load(open('ban_words.json')))) != set():
+		await message.channel.send(f'{message.author.mention}, да я смотрю тебе давно рот мылом не мыли... Это было первое предупреждение, после трех предупреждений тебя забанят!')
+		await message.delete()
 
 # RUN
 bot.run(config.TOKEN)
